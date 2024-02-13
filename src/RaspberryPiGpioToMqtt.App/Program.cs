@@ -1,23 +1,14 @@
-﻿using Microsoft.Extensions.Configuration;
-using System.Globalization;
+﻿using RaspberryPiGpioToMqtt.App;
 
+var builder = WebApplication.CreateBuilder();
 
-var configuration = new ConfigurationBuilder()
-    .AddUserSecrets<Program>()
-    .Build();
+builder.Configuration.AddUserSecrets<Program>();
+builder.Services.Configure<MqttClientOptions>(
+    builder.Configuration.GetSection(MqttClientOptions.SectionName));
 
-var client = new MqttClient(configuration.GetSection("Mqtt"));
+builder.Services.AddSingleton<MqttClient>();
+builder.Services.AddHostedService<SensorHostedService>();
 
-try
-{
-    var random = new Random();
-    var temperature = (random.Next(150, 220) / 10d).ToString(CultureInfo.InvariantCulture);
-    await client.SendData("greenhouse/in/temperature", temperature);
-    var humidity = random.Next(30, 60).ToString();
-    await client.SendData("greenhouse/in/humidity", humidity);
-}
-finally
-{
+var app = builder.Build();
 
-    await client.DisposeAsync();
-}
+app.Run();

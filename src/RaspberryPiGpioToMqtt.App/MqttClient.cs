@@ -1,27 +1,44 @@
-﻿using Microsoft.Extensions.Configuration;
-using MQTTnet.Client;
+﻿using MQTTnet.Client;
 using MQTTnet;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.Options;
+
+namespace RaspberryPiGpioToMqtt.App;
+
+public class MqttClientOptions
+{
+    public const string SectionName = "Mqtt";
+    [Required]
+    public string Server { get; set; } = string.Empty;
+    public string? User { get; set; }
+    public string? Password { get; set; }
+}
 
 public sealed class MqttClient : IAsyncDisposable
 {
-    private readonly IConfiguration _configuration;
-    private IMqttClient _mqttClient;
+    private readonly MqttClientOptions _configuration;
+    private readonly IMqttClient _mqttClient;
 
-    public MqttClient(IConfiguration configuration)
+    public MqttClient(IOptions<MqttClientOptions> configuration)
     {
         var mqttFactory = new MqttFactory();
         _mqttClient = mqttFactory.CreateMqttClient();
-        _configuration = configuration;
+        _configuration = configuration.Value;
     }
 
     private async Task ConnectIfDisconected()
     {
         if (_mqttClient == null || _mqttClient.IsConnected)
             return;
-        var mqttClientOptions = new MqttClientOptionsBuilder()
-        .WithTcpServer(_configuration["Server"]!)
-        .WithCredentials(_configuration["User"]!, _configuration["Password"]!)
-        .Build();
+        var mqttClientOptionsBuilder = new MqttClientOptionsBuilder()
+            .WithTcpServer(_configuration.Server);
+
+        if (!string.IsNullOrWhiteSpace(_configuration.User)
+            && !string.IsNullOrWhiteSpace(_configuration.Password))
+        {
+            mqttClientOptionsBuilder.WithCredentials(_configuration.User, _configuration.Password);
+        }
+        var mqttClientOptions = mqttClientOptionsBuilder.Build();
 
         await _mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
     }
