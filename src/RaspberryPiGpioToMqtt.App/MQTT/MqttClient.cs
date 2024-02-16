@@ -2,8 +2,9 @@
 using MQTTnet;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
-namespace RaspberryPiGpioToMqtt.App;
+namespace RaspberryPiGpioToMqtt.App.MQTT;
 
 public class MqttClientOptions
 {
@@ -18,6 +19,12 @@ public sealed class MqttClient : IAsyncDisposable
 {
     private readonly MqttClientOptions _configuration;
     private readonly IMqttClient _mqttClient;
+
+    private JsonSerializerOptions _serializerOptions => new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+    };
 
     public MqttClient(IOptions<MqttClientOptions> configuration)
     {
@@ -51,6 +58,12 @@ public sealed class MqttClient : IAsyncDisposable
          .WithPayload(payload)
          .Build();
         await _mqttClient.PublishAsync(message);
+    }
+
+    public async Task SendData<T>(string topic, T data)
+    {
+        var payload = JsonSerializer.Serialize(data, _serializerOptions);
+        await SendData(topic, payload);
     }
 
     public async ValueTask DisposeAsync()
