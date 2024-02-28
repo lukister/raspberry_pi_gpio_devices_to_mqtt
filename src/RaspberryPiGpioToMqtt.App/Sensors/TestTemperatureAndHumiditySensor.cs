@@ -10,43 +10,34 @@ public class TestTemperatureAndHumiditySensor : ISensor
 
     private string _telemetryTopic;
 
-    public TestTemperatureAndHumiditySensor(string id, string name)
+    public TestTemperatureAndHumiditySensor(string id, string topicPrefix, string name)
     {
         Id = id;
         Name = name;
-        _telemetryTopic = $"{Id}/sensor";
+        _telemetryTopic = $"{topicPrefix}/sensor";
     }
 
     public SensorDto[] GetConfigurations()
     {
-        var discoveryDevice = new DeviceDto()
-        {
-            Identifiers = [Id],
-            Manufacturer = "Fake",
-            Model = "Device",
-            Name = Name,
-        };
 
         var tempSensor = new SensorDto()
         {
-            Name = "Temperature",
+            Name = $"{Name} Temperature",
             DeviceClass = "temperature",
             StateTopic = _telemetryTopic,
             ValueTemplate = "{{ value_json.temperature }}",
             UnitOfMeasurement = "°C",
-            UniqueId = $"{discoveryDevice.Identifiers[0]}_temperature",
-            Device = discoveryDevice,
+            UniqueId = $"{Id}_temperature",
         };
 
         var humidytySenspr = new SensorDto()
         {
-            Name = "Humidity",
+            Name = $"{Name} Humidity",
             DeviceClass = "humidity",
             StateTopic = _telemetryTopic,
             ValueTemplate = "{{ value_json.humidity }}",
             UnitOfMeasurement = "%",
-            UniqueId = $"{discoveryDevice.Identifiers[0]}_humidity",
-            Device = discoveryDevice,
+            UniqueId = $"{Id}_humidity",
         };
 
         return [tempSensor, humidytySenspr];

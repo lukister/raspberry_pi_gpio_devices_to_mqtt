@@ -1,16 +1,16 @@
-﻿using RaspberryPiGpioToMqtt.App.MQTT;
+﻿using RaspberryPiGpioToMqtt.App;
+using RaspberryPiGpioToMqtt.App.MQTT;
 using RaspberryPiGpioToMqtt.App.Sensors;
 
-public class SensorHostedService(MqttClient client) : BackgroundService
+public class SensorHostedService(MqttClient client, DeviceRepository deviceRepository) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var sensors = new List<ISensor>() 
-        {
-            new TestTemperatureAndHumiditySensor("fake_device_1", "Fake device 1")
-        };
-        await ConfigureSensors(client, sensors);
+        var devices = deviceRepository.GetDevices();
 
+        await ConfigureSensors(client, devices);
+
+        var sensors = devices.SelectMany(x => x.Sensors).ToList();
         while (!stoppingToken.IsCancellationRequested)
         {
             await SendSensorTelemetry(client, sensors);
@@ -27,7 +27,7 @@ public class SensorHostedService(MqttClient client) : BackgroundService
         }
     }
 
-    private static async Task ConfigureSensors(MqttClient client, List<ISensor> devices)
+    private static async Task ConfigureSensors(MqttClient client, IEnumerable<Device> devices)
     {
         foreach (var device in devices)
         {

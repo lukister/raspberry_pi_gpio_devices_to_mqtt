@@ -1,0 +1,26 @@
+{
+  "SystemId": "test_system",
+  "Devices": [
+    {
+      "Id": "test_greenhouse",
+      "Name": "Test Greenhouse",
+      "Sensors": [
+        {
+          "Id": "insideTemp",
+          "Type": "TestTemperatureAndHumiditySensor",
+          "Name":  "Inside"
+        },
+        {
+          "Id": "outsideTemp",
+          "Type": "TestTemperatureAndHumiditySensor",
+          "Name": "Outside"
+        },
+        {
+          "Id": "outsidedafsTemp",
+          "Type": "TestTemperatureAndHumiditySensor",
+          "Name": "InsideOut"
+        }
+      ]
+    }
+  ]
+}
