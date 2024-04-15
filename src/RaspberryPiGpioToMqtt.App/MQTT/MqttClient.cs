@@ -3,6 +3,8 @@ using MQTTnet;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using RaspberryPoGpioToMqtt.Devices;
 
 namespace RaspberryPiGpioToMqtt.App.MQTT;
 
@@ -15,7 +17,7 @@ public class MqttClientOptions
     public string? Password { get; set; }
 }
 
-public sealed class MqttClient : IAsyncDisposable
+public sealed class MqttClient : ICommunication, IAsyncDisposable
 {
     private readonly MqttClientOptions _configuration;
     private readonly IMqttClient _mqttClient;
@@ -31,6 +33,7 @@ public sealed class MqttClient : IAsyncDisposable
         var mqttFactory = new MqttFactory();
         _mqttClient = mqttFactory.CreateMqttClient();
         _configuration = configuration.Value;
+        _mqttClient.ApplicationMessageReceivedAsync += MessageRecived;
     }
 
     private async Task ConnectIfDisconected()
@@ -50,7 +53,7 @@ public sealed class MqttClient : IAsyncDisposable
         await _mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
     }
 
-    public async Task SendData(string topic, string payload)
+    private async Task SendData(string topic, string payload)
     {
         await ConnectIfDisconected();
         var message = new MqttApplicationMessageBuilder()
@@ -60,10 +63,15 @@ public sealed class MqttClient : IAsyncDisposable
         await _mqttClient.PublishAsync(message);
     }
 
-    public async Task SendData<T>(string topic, T data)
+    private Task MessageRecived(MqttApplicationMessageReceivedEventArgs args)
     {
-        var payload = JsonSerializer.Serialize(data, _serializerOptions);
-        await SendData(topic, payload);
+        throw new NotImplementedException();
+    }
+
+    public async void Tmp()
+    {
+        var subscription = await _mqttClient.SubscribeAsync("");
+        
     }
 
     public async ValueTask DisposeAsync()
@@ -73,5 +81,16 @@ public sealed class MqttClient : IAsyncDisposable
             .Build();
         await _mqttClient.DisconnectAsync(disconectOptions);
         _mqttClient.Dispose();
+    }
+
+    public async Task Send<T>(string topic, T message)
+    {
+        var payload = JsonSerializer.Serialize(message, _serializerOptions);
+        await SendData(topic, payload);
+    }
+
+    public async Task Send(string topic, string message)
+    {
+        await SendData(topic, message);
     }
 }

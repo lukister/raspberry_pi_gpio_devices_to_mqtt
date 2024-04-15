@@ -1,17 +1,16 @@
-﻿using RaspberryPiGpioToMqtt.App;
-using RaspberryPiGpioToMqtt.App.MQTT;
+﻿using RaspberryPiGpioToMqtt.App.MQTT;
+using RaspberryPoGpioToMqtt.Devices;
 
 var builder = WebApplication.CreateBuilder();
 builder.Configuration.AddUserSecrets<Program>();
 
 builder.Services.Configure<MqttClientOptions>(
     builder.Configuration.GetSection(MqttClientOptions.SectionName));
-builder.Services.Configure<DeviceRepository.Options>(
-    builder.Configuration.GetSection(DeviceRepository.Options.SectionName));
 
-builder.Services.AddSingleton<MqttClient>();
+
+builder.Services.AddSingleton<ICommunication, MqttClient>();
 builder.Services.AddHostedService<SensorHostedService>();
-builder.Services.AddSingleton<DeviceRepository>();
+builder.Services.AddDevices(builder.Configuration);
 
 var app = builder.Build();
 

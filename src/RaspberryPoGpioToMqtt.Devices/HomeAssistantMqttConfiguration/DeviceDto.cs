@@ -1,6 +1,6 @@
-﻿namespace RaspberryPiGpioToMqtt.App.DTOs;
+﻿namespace RaspberryPiGpioToMqtt.Devices.HomeAssistantMqttConfiguration;
 
-public class DeviceDto
+internal class DeviceDto
 {
     public string? Name { get; set; }
     public string[] Identifiers { get; set; } = [];
