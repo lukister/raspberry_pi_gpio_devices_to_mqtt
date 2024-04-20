@@ -2,7 +2,7 @@
 
 namespace RaspberryPoGpioToMqtt.Devices.DeviceRepository;
 
-internal class SensorEntity
+internal class CapabilityEntity
 {
     public string Id { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;

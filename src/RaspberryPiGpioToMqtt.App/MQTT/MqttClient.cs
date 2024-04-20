@@ -63,15 +63,28 @@ public sealed class MqttClient : ICommunication, IAsyncDisposable
         await _mqttClient.PublishAsync(message);
     }
 
-    private Task MessageRecived(MqttApplicationMessageReceivedEventArgs args)
+
+    private Dictionary<string, Func<string, Task>> _subscribedTopicActions = [];
+
+    private async Task MessageRecived(MqttApplicationMessageReceivedEventArgs args)
     {
-        throw new NotImplementedException();
+        if (!_subscribedTopicActions.TryGetValue(args.ApplicationMessage.Topic, out var action))
+            return;
+
+        await action(args.ApplicationMessage.ConvertPayloadToString());
     }
 
-    public async void Tmp()
+    public async Task SubscribeFor(string topic, Func<string, Task> onMessageRecived)
     {
-        var subscription = await _mqttClient.SubscribeAsync("");
-        
+        _subscribedTopicActions.Add(topic, message => onMessageRecived(message));
+        var subscription = await _mqttClient.SubscribeAsync(topic);
+    }
+
+    public async Task SubscribeFor<T>(string topic, Func<T, Task> onMessageRecived)
+    {
+        _subscribedTopicActions.Add(topic, message => onMessageRecived(
+            JsonSerializer.Deserialize<T>(message) ?? throw new Exception("Unable to deserialize message")));
+        var subscription = await _mqttClient.SubscribeAsync(topic);
     }
 
     public async ValueTask DisposeAsync()

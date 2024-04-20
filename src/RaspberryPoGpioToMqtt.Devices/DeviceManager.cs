@@ -1,21 +1,24 @@
 ﻿using RaspberryPoGpioToMqtt.Devices.Sensors;
 using RaspberryPoGpioToMqtt.Devices.Configurations;
 using RaspberryPoGpioToMqtt.Devices.DeviceRepository;
+using RaspberryPoGpioToMqtt.Devices.Switch;
 
 namespace RaspberryPoGpioToMqtt.Devices;
 
 internal class DeviceManager : IAsyncDisposable, IDeviceManager
 {
     private List<SensorCommunication> _sensors = [];
+    private List<SwitchCommunication> _switches = [];
     private List<AvalibilityConfiguration> _avalibilityCofiguration = [];
     private readonly JsonFileDeviceRepository _repository;
     private readonly ICommunication _client;
 
-    internal DeviceManager(JsonFileDeviceRepository repository, ICommunication client)
+    public DeviceManager(JsonFileDeviceRepository repository, ICommunication client)
     {
         _repository = repository;
         _client = client;
     }
+
     public async Task Initialize()
     {
         InitializeConfiguration();
@@ -52,9 +55,16 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
             _avalibilityCofiguration.Add(new AvalibilityConfiguration(device.Id));
             foreach (var sensor in device.Sensors)
             {
-                var configuration = new SensorConfiguration(device.Id, sensor.Id, device.Name, sensor.Name);
+                var configuration = new CapabilityConfiguration(device.Id, sensor.Id, device.Name, sensor.Name);
                 var sensorCommunication = new SensorCommunication(SensorFactory.Create(sensor), configuration, _client);
                 _sensors.Add(sensorCommunication);
+            }
+
+            foreach(var swich in device.Switches)
+            {
+                var configuration = new CapabilityConfiguration(device.Id, swich.Id, device.Name, swich.Name);
+                var switchCommunication = new SwitchCommunication(SwitchFactory.Create(swich), configuration, _client);
+                _switches.Add(switchCommunication);
             }
         }
     }
@@ -64,6 +74,11 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
         foreach (var sensor in _sensors)
         {
             await sensor.SendConfigurationMessage();
+        }
+
+        foreach (var @switch in _switches)
+        {
+            await @switch.SendConfigurationMessage();
         }
     }
 

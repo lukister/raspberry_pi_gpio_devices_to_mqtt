@@ -2,6 +2,6 @@
 
 internal interface ISensor
 {
-    public Capability[] GetCapabilities();
-    public object ReadState();
+    public SensorCapability[] GetCapabilities();
+    public Task<object> ReadState();
 }

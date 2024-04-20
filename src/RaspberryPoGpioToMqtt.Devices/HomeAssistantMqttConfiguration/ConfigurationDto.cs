@@ -11,4 +11,9 @@ internal class ConfigurationDto(string uniqueId)
     public string? UnitOfMeasurement { get; set; }
     public DeviceDto? Device { get; set; }
     public List<AvailabilityDto> Availability { get; set; } = null!;
+    public bool Optimistic { get; set; }
+    public string? StateOn { get; set; }
+    public string? StateOff { get; set; }
+    public string? PayloadOn { get; set; }
+    public string? PayloadOff { get; set; }
 }

@@ -2,18 +2,18 @@
 
 internal class TestTemperatureAndHumiditySensor : ISensor
 {
-    public Capability[] GetCapabilities()
+    public SensorCapability[] GetCapabilities()
     {
-        var tempSensor = new Capability("temperature", "Temperature", "temperature",
+        var tempSensor = new SensorCapability("temperature", "Temperature", "temperature",
             "{{ value_json.temperature }}", "°C");
 
-        var humidytySenspr = new Capability("humidity", "Humidity", "humidity",
+        var humidytySenspr = new SensorCapability("humidity", "Humidity", "humidity",
             "{{ value_json.humidity }}", "%");
 
         return [tempSensor, humidytySenspr];
     }
 
-    public object ReadState()
+    public Task<object> ReadState()
     {
         var random = new Random();
 
@@ -23,7 +23,7 @@ internal class TestTemperatureAndHumiditySensor : ISensor
             Humidity = random.Next(30, 60),
         };
 
-        return telemetry;
+        return Task.FromResult((object)telemetry);
     }
 
     private class TelemetryDataDto

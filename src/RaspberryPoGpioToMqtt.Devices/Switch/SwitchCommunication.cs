@@ -1,25 +1,19 @@
 ﻿using RaspberryPiGpioToMqtt.Devices.HomeAssistantMqttConfiguration;
 using RaspberryPoGpioToMqtt.Devices.Configurations;
 
-namespace RaspberryPoGpioToMqtt.Devices.Sensors;
+namespace RaspberryPoGpioToMqtt.Devices.Switch;
 
-internal class SensorCommunication
+internal class SwitchCommunication
 {
-    private readonly ISensor _sensor;
+    private readonly ISwitch _switch;
     private readonly CapabilityConfiguration _configuration;
     private readonly ICommunication _communication;
 
-    public SensorCommunication(ISensor sensor, CapabilityConfiguration configuration, ICommunication communication)
+    public SwitchCommunication(ISwitch @switch, CapabilityConfiguration configuration, ICommunication communication)
     {
-        _sensor = sensor;
+        _switch = @switch;
         _configuration = configuration;
         _communication = communication;
-    }
-
-    public async Task SendSensorState()
-    {
-        var state = await _sensor.ReadState();
-        await _communication.Send(_configuration.GetStateTopic(), state);
     }
 
     public async Task SendConfigurationMessage()
@@ -32,20 +26,30 @@ internal class SensorCommunication
 
         var availabilityDto = new AvailabilityDto(_configuration.GetAvalibilityTopic());
 
-        var capabilities = _sensor.GetCapabilities()
+        var capabilities = _switch.GetCapabilities()
             .Select(x => new ConfigurationDto(_configuration.GetCapabilityId(x.Id))
             {
                 Name = $"{_configuration.SensorName} {x.Name}",
-                DeviceClass = x.DeviceClass,
                 StateTopic = _configuration.GetStateTopic(),
-                ValueTemplate = x.ValueTemplate,
-                UnitOfMeasurement = x.UnitOfMeasurement,
+                CommandTopic = _configuration.GetCommandTopic(),
                 Device = device,
                 Availability = [availabilityDto],
+                StateOn = x.StateOn,
+                StateOff = x.StateOff,
+                PayloadOn = x.StateOn,
+                PayloadOff = x.StateOff,
+                Optimistic = false,
             })
             .ToArray();
 
         foreach (var capability in capabilities)
-            await _communication.Send(ConfigurationExtension.GetSensorDiscoveryTopic(capability.UniqueId), capability);
+        {
+            await _communication.Send(ConfigurationExtension.GetSwitchDiscoveryTopic(capability.UniqueId), capability);
+            await _communication.SubscribeFor(capability.CommandTopic!, async message =>
+            {
+                await _switch.SetState(message);
+                await _communication.Send(capability.StateTopic!, message);
+            });
+        }
     }
 }
