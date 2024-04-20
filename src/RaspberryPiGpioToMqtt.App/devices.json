@@ -20,6 +20,13 @@
         "Type": "TestSimpleSwitch",
         "Name": "Pump"
       }
+    ],
+    "Buttons": [
+      {
+        "Id": "button",
+        "Type": "TestButton",
+        "Name": "Button"
+      }
     ]
   }
 ]

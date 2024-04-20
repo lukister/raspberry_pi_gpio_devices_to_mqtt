@@ -1,4 +1,5 @@
-﻿namespace RaspberryPoGpioToMqtt.Devices.Configurations;
+﻿
+namespace RaspberryPoGpioToMqtt.Devices.Configurations;
 
 internal static class ConfigurationExtension
 {
@@ -21,6 +22,8 @@ internal static class ConfigurationExtension
         => GetDiscoveryTopic(id, "sensor");
     public static string GetSwitchDiscoveryTopic(string id)
         => GetDiscoveryTopic(id, "switch");
+    internal static string GetButtonDiscoveryTopic(string id)
+        => GetDiscoveryTopic(id, "button");
 
     private static string GetDiscoveryTopic(string id, string type) => string.Join(_topicSeparator,
         "homeassistant", type, id, "config");
@@ -30,4 +33,6 @@ internal static class ConfigurationExtension
 
     public static string GetCapabilityId(this CapabilityConfiguration conf, string capabulityId)
         => string.Join(_idSeparator, conf.DeviceId, conf.SensorId, capabulityId);
+
+    
 }

@@ -2,6 +2,7 @@
 using RaspberryPoGpioToMqtt.Devices.Configurations;
 using RaspberryPoGpioToMqtt.Devices.DeviceRepository;
 using RaspberryPoGpioToMqtt.Devices.Switch;
+using RaspberryPoGpioToMqtt.Devices.Button;
 
 namespace RaspberryPoGpioToMqtt.Devices;
 
@@ -9,6 +10,7 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
 {
     private List<SensorCommunication> _sensors = [];
     private List<SwitchCommunication> _switches = [];
+    private List<ButtonCommunication> _buttons = [];
     private List<AvalibilityConfiguration> _avalibilityCofiguration = [];
     private readonly JsonFileDeviceRepository _repository;
     private readonly ICommunication _client;
@@ -53,6 +55,7 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
         foreach (var device in devicesConfiguration)
         {
             _avalibilityCofiguration.Add(new AvalibilityConfiguration(device.Id));
+
             foreach (var sensor in device.Sensors)
             {
                 var configuration = new CapabilityConfiguration(device.Id, sensor.Id, device.Name, sensor.Name);
@@ -60,11 +63,18 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
                 _sensors.Add(sensorCommunication);
             }
 
-            foreach(var swich in device.Switches)
+            foreach(var @switch in device.Switches)
             {
-                var configuration = new CapabilityConfiguration(device.Id, swich.Id, device.Name, swich.Name);
-                var switchCommunication = new SwitchCommunication(SwitchFactory.Create(swich), configuration, _client);
+                var configuration = new CapabilityConfiguration(device.Id, @switch.Id, device.Name, @switch.Name);
+                var switchCommunication = new SwitchCommunication(SwitchFactory.Create(@switch), configuration, _client);
                 _switches.Add(switchCommunication);
+            }
+
+            foreach (var button in device.Buttons)
+            {
+                var configuration = new CapabilityConfiguration(device.Id, button.Id, device.Name, button.Name);
+                var buttonCommunication = new ButtonCommunication(ButtonFactory.Create(button), configuration, _client);
+                _buttons.Add(buttonCommunication);
             }
         }
     }
@@ -79,6 +89,11 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
         foreach (var @switch in _switches)
         {
             await @switch.SendConfigurationMessage();
+        }
+
+        foreach (var button in _buttons)
+        {
+            await button.SendConfigurationMessage();
         }
     }
 
