@@ -14,4 +14,6 @@ builder.Services.AddDevices(builder.Configuration);
 
 var app = builder.Build();
 
+app.MapGet("", () => "Welcome to Raspeberry Pi Gpio to Mqtt app");
+
 app.Run();
