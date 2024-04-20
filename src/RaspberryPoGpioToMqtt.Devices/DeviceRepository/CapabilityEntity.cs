@@ -9,4 +9,15 @@ internal class CapabilityEntity
     public string Name { get; set; } = string.Empty;
     [JsonExtensionData]
     public Dictionary<string, object> AdditionalConfiguration { get; set; } = [];
+
+    public T GetValue<T>(string name)
+    {
+        if (!AdditionalConfiguration.TryGetValue(name, out var value))
+            throw new Exception();
+
+        if (value is T)
+            return (T)value;
+
+        return (T)Convert.ChangeType(value, typeof(T));
+    }
 }

@@ -1,13 +1,10 @@
 ﻿namespace RaspberryPoGpioToMqtt.Devices.Switch.Implementations;
 
-internal class TestSimpleSwitch(string? stateOn = null, string? stateOff = null) : ISwitch
+internal class TestSimpleSwitch() : ISwitch
 {
-    private readonly string? _stateOn = stateOn;
-    private readonly string? _stateOff = stateOff;
-
     public SwitchCapability[] GetCapabilities()
     {
-        var @switch = new SwitchCapability("switch", string.Empty, _stateOn ?? "ON", _stateOff ?? "OFF");
+        var @switch = new SwitchCapability("switch", string.Empty, "ON", "OFF");
         return [@switch];
     }
 

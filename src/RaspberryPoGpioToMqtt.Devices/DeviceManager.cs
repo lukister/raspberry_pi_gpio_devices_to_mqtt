@@ -14,11 +14,13 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
     private List<AvalibilityConfiguration> _avalibilityCofiguration = [];
     private readonly JsonFileDeviceRepository _repository;
     private readonly ICommunication _client;
+    private readonly Factory _factory;
 
-    public DeviceManager(JsonFileDeviceRepository repository, ICommunication client)
+    public DeviceManager(JsonFileDeviceRepository repository, ICommunication client, Factory factory)
     {
         _repository = repository;
         _client = client;
+        _factory = factory;
     }
 
     public async Task Initialize()
@@ -59,14 +61,14 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
             foreach (var sensor in device.Sensors)
             {
                 var configuration = new CapabilityConfiguration(device.Id, sensor.Id, device.Name, sensor.Name);
-                var sensorCommunication = new SensorCommunication(SensorFactory.Create(sensor), configuration, _client);
+                var sensorCommunication = new SensorCommunication(_factory.CreateSensor(sensor), configuration, _client);
                 _sensors.Add(sensorCommunication);
             }
 
             foreach(var @switch in device.Switches)
             {
                 var configuration = new CapabilityConfiguration(device.Id, @switch.Id, device.Name, @switch.Name);
-                var switchCommunication = new SwitchCommunication(SwitchFactory.Create(@switch), configuration, _client);
+                var switchCommunication = new SwitchCommunication(_factory.CreateSwitch(@switch), configuration, _client);
                 _switches.Add(switchCommunication);
             }
 
