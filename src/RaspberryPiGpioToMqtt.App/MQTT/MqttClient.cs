@@ -13,8 +13,10 @@ public class MqttClientOptions
     public const string SectionName = "Mqtt";
     [Required]
     public string Server { get; set; } = string.Empty;
-    public string? User { get; set; }
-    public string? Password { get; set; }
+    [Required]
+    public string User { get; set; } = string.Empty;
+    [Required]
+    public string Password { get; set; } = string.Empty;
 }
 
 public sealed class MqttClient : ICommunication, IAsyncDisposable
