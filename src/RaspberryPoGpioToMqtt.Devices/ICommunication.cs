@@ -20,6 +20,7 @@ public static class ServiceExtension
             configuration.GetSection(JsonFileDeviceRepository.Options.SectionName));
         serviceProvider.AddSingleton<JsonFileDeviceRepository>();
         serviceProvider.AddSingleton<IDeviceManager, DeviceManager>();
+        serviceProvider.AddSingleton<Factory>();
         return serviceProvider;
     }
 }
