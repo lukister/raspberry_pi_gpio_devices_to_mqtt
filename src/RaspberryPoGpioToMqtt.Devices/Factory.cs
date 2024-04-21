@@ -8,32 +8,31 @@ using System.Device.Gpio;
 namespace RaspberryPoGpioToMqtt.Devices;
 internal class Factory
 {
-    private GpioController _gpio;
+    Lazy<GpioController> _controller = new Lazy<GpioController>(() => new GpioController());
 
     public Factory()
     {
-        _gpio = new GpioController();
     }
 
     public ISensor CreateSensor(CapabilityEntity sensor) => sensor.Type switch
     {
-        nameof(TestTemperatureAndHumiditySensor) 
+        nameof(TestTemperatureAndHumiditySensor)
             => new TestTemperatureAndHumiditySensor(),
-        nameof(Dht22TemperatureAndHumiditySensor) 
-            => new Dht22TemperatureAndHumiditySensor(sensor.GetValue<int>("Pin"), _gpio),
+        nameof(Dht22TemperatureAndHumiditySensor)
+            => new Dht22TemperatureAndHumiditySensor(sensor.GetValue<int>("Pin"), _controller.Value),
         _ => throw new Exception("Unknown sensor")//TODO custom exception
     };
 
     public ISwitch CreateSwitch(CapabilityEntity sensor) => sensor.Type switch
     {
-        nameof(TestSimpleSwitch) 
+        nameof(TestSimpleSwitch)
             => new TestSimpleSwitch(),
-        nameof(GpioOnOffSwitch) 
-            => new GpioOnOffSwitch(sensor.GetValue<int>("Pin"), sensor.GetValue<bool>("LowMeanOn"), _gpio),
+        nameof(GpioOnOffSwitch)
+            => new GpioOnOffSwitch(sensor.GetValue<int>("Pin"), sensor.GetValue<bool>("LowMeanOn"), _controller.Value),
         nameof(GpioTwoPinOnOffWithTimeIntervalSwitch)
             => new GpioTwoPinOnOffWithTimeIntervalSwitch(
                 sensor.GetValue<int>("PinOpen"), sensor.GetValue<int>("PinClose"),
-                sensor.GetValue<TimeSpan>("TimeSpanToChange"), _gpio),
+                sensor.GetValue<TimeSpan>("TimeSpanToChange"), _controller.Value),
         _ => throw new Exception("Unknown sensor")//TODO custom exception
     };
 }
