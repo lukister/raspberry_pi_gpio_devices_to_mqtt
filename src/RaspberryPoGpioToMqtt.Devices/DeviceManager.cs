@@ -3,6 +3,7 @@ using RaspberryPoGpioToMqtt.Devices.Configurations;
 using RaspberryPoGpioToMqtt.Devices.DeviceRepository;
 using RaspberryPoGpioToMqtt.Devices.Switch;
 using RaspberryPoGpioToMqtt.Devices.Button;
+using Microsoft.Extensions.Logging;
 
 namespace RaspberryPoGpioToMqtt.Devices;
 
@@ -15,12 +16,14 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
     private readonly JsonFileDeviceRepository _repository;
     private readonly ICommunication _client;
     private readonly Factory _factory;
+    private readonly ILogger<DeviceManager> _logger;
 
-    public DeviceManager(JsonFileDeviceRepository repository, ICommunication client, Factory factory)
+    public DeviceManager(JsonFileDeviceRepository repository, ICommunication client, Factory factory, ILogger<DeviceManager> logger)
     {
         _repository = repository;
         _client = client;
         _factory = factory;
+        _logger = logger;
     }
 
     public async Task Initialize()
@@ -46,7 +49,14 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
     {
         foreach (var sensor in _sensors)
         {
-            await sensor.SendSensorState();
+            try
+            {
+                await sensor.SendSensorState();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected exception during sensor read");
+            }
         }
     }
 
