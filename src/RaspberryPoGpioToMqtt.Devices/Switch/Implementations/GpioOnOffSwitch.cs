@@ -13,7 +13,7 @@ internal class GpioOnOffSwitch : ISwitch
     private readonly PinValue _onValue;
     private readonly PinValue _offValue;
 
-    public GpioOnOffSwitch(int pin, bool lowMeanOn, GpioController controller)
+    public GpioOnOffSwitch(int pin, bool lowMeanOn, bool turnOffOnStart, GpioController controller)
     {
         _pin = pin;
         _lowMeanOn = lowMeanOn;
@@ -33,6 +33,9 @@ internal class GpioOnOffSwitch : ISwitch
         if (!_controller.IsPinOpen(_pin))
             _controller.OpenPin(_pin);
         _controller.SetPinMode(_pin, PinMode.Output);
+
+        if (turnOffOnStart)
+            Off();
     }
 
     public SwitchCapability[] GetCapabilities()

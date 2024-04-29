@@ -18,4 +18,11 @@ internal class CapabilityEntity
         return value.Deserialize<T>() 
             ?? throw new Exception($"Unable to get value: {name} from {value}");
     }
+
+    public T? GetOptionalValue<T>(string name)
+    {
+        if (!AdditionalConfiguration.TryGetValue(name, out var value))
+            return default;
+        return value.Deserialize<T>();
+    }
 }

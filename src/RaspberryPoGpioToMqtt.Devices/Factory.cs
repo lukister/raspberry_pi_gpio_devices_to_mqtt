@@ -28,7 +28,10 @@ internal class Factory
         nameof(TestSimpleSwitch)
             => new TestSimpleSwitch(),
         nameof(GpioOnOffSwitch)
-            => new GpioOnOffSwitch(sensor.GetValue<int>("Pin"), sensor.GetValue<bool>("LowMeanOn"), _controller.Value),
+            => new GpioOnOffSwitch(
+                sensor.GetValue<int>("Pin"), 
+                sensor.GetOptionalValue<bool>("LowMeanOn"),
+                sensor.GetOptionalValue<bool>("TurnOffOnStart"), _controller.Value),
         nameof(GpioTwoPinOnOffWithTimeIntervalSwitch)
             => new GpioTwoPinOnOffWithTimeIntervalSwitch(
                 sensor.GetValue<int>("PinOpen"), sensor.GetValue<int>("PinClose"),
