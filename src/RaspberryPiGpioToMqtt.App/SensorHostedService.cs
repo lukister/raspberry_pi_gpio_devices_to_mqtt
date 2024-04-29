@@ -7,18 +7,19 @@ public class SensorsOptions
     public TimeSpan SensorReadInterval { get; set; }
 }
 
-public class SensorHostedService(IOptions<SensorsOptions> options, IDeviceManager deviceRepository) : BackgroundService
+public class SensorHostedService(IOptions<SensorsOptions> options, IDeviceManager deviceRepository, ILogger<SensorHostedService> logger) : BackgroundService
 {
     private SensorsOptions _sensorsOptions = options.Value;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await deviceRepository.Initialize();
+        await Task.Delay(TimeSpan.FromSeconds(3), stoppingToken);
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(TimeSpan.FromSeconds(3), stoppingToken);
-            Console.WriteLine("Reading Sensors");
+            logger.LogInformation("Reading Sensors");
             await deviceRepository.SendSensorStates();
+            logger.LogInformation("Sensors read");
             await Task.Delay(_sensorsOptions.SensorReadInterval, stoppingToken);
         }
     }

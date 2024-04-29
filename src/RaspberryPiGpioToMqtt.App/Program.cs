@@ -2,8 +2,14 @@
 using RaspberryPoGpioToMqtt.Devices;
 
 var builder = WebApplication.CreateBuilder();
+builder.Configuration.AddJsonFile("appsettings.json", optional: false);
 builder.Configuration.AddUserSecrets<Program>();
 builder.Configuration.AddEnvironmentVariables();
+
+builder.Services.AddOptions<SensorsOptions>()
+    .Bind(builder.Configuration.GetSection(SensorsOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 builder.Services.AddOptions<MqttClientOptions>()
     .Bind(builder.Configuration.GetSection(MqttClientOptions.SectionName))
