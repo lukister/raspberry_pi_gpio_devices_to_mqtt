@@ -1,7 +1,16 @@
-﻿using RaspberryPoGpioToMqtt.Devices;
+﻿using Microsoft.Extensions.Options;
+using RaspberryPoGpioToMqtt.Devices;
 
-public class SensorHostedService(IDeviceManager deviceRepository) : BackgroundService
+public class SensorsOptions
 {
+    public const string SectionName = "Sonsors";
+    public TimeSpan SensorReadInterval { get; set; }
+}
+
+public class SensorHostedService(IOptions<SensorsOptions> options, IDeviceManager deviceRepository) : BackgroundService
+{
+    private SensorsOptions _sensorsOptions = options.Value;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await deviceRepository.Initialize();
@@ -10,7 +19,7 @@ public class SensorHostedService(IDeviceManager deviceRepository) : BackgroundSe
             await Task.Delay(TimeSpan.FromSeconds(3), stoppingToken);
             Console.WriteLine("Reading Sensors");
             await deviceRepository.SendSensorStates();
-            await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+            await Task.Delay(_sensorsOptions.SensorReadInterval, stoppingToken);
         }
     }
 }

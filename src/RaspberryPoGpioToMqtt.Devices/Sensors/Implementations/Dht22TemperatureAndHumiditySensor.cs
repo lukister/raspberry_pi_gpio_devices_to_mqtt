@@ -7,6 +7,7 @@ namespace RaspberryPoGpioToMqtt.Devices.Sensors.Implementations;
 internal class Dht22TemperatureAndHumiditySensor : BaseTemperatureAndHumiditySensor, ISensor
 {
     private readonly Dht22 _sensor;
+    private TimeSpan _maxReadTime = TimeSpan.FromSeconds(30);
 
     public Dht22TemperatureAndHumiditySensor(int pin, GpioController controller) 
         => _sensor = new Dht22(pin, gpioController: controller);
@@ -16,7 +17,7 @@ internal class Dht22TemperatureAndHumiditySensor : BaseTemperatureAndHumiditySen
         var result = new TemperatureAndHumidityTelemetryDto();
         bool temperatureRead = false, humidityRead = false;
         var stopwathch = Stopwatch.StartNew();
-        while (stopwathch.Elapsed < TimeSpan.FromSeconds(10))
+        while (stopwathch.Elapsed < _maxReadTime)
         {
             temperatureRead = TryReadTemperature(out var temperature);
             if (temperatureRead)
@@ -29,7 +30,7 @@ internal class Dht22TemperatureAndHumiditySensor : BaseTemperatureAndHumiditySen
             Thread.Sleep(_sensor.MinTimeBetweenReads);
         }
         
-        while (stopwathch.Elapsed < TimeSpan.FromSeconds(10))
+        while (stopwathch.Elapsed < _maxReadTime)
         {
             humidityRead = TryReadHumidity(out var humidity);
             if (humidityRead)
@@ -43,7 +44,7 @@ internal class Dht22TemperatureAndHumiditySensor : BaseTemperatureAndHumiditySen
         }
         stopwathch.Stop();
         if (!humidityRead || !temperatureRead)
-            throw new Exception("Unable to read temperature and humidity in 10 second.");
+            throw new Exception($"Unable to read temperature and humidity in {_maxReadTime}");
         return Task.FromResult((object)result);
     }
 

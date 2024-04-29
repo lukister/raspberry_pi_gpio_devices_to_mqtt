@@ -75,7 +75,7 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
                 _sensors.Add(sensorCommunication);
             }
 
-            foreach(var @switch in device.Switches)
+            foreach (var @switch in device.Switches)
             {
                 var configuration = new CapabilityConfiguration(device.Id, @switch.Id, device.Name, @switch.Name);
                 var switchCommunication = new SwitchCommunication(_factory.CreateSwitch(@switch), configuration, _client);
