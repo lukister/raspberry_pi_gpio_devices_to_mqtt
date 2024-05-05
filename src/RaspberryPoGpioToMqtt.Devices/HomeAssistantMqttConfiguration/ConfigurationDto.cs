@@ -16,4 +16,5 @@ internal class ConfigurationDto(string uniqueId)
     public string? StateOff { get; set; }
     public string? PayloadOn { get; set; }
     public string? PayloadOff { get; set; }
+    public int Qos { get; set; } = 1;
 }
