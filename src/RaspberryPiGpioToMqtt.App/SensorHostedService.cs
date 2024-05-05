@@ -7,7 +7,7 @@ public class SensorsOptions
     public TimeSpan SensorReadInterval { get; set; }
 }
 
-public class SensorHostedService(IOptions<SensorsOptions> options, IDeviceManager deviceRepository, ILogger<SensorHostedService> logger) : BackgroundService
+public class SensorHostedService(IOptions<SensorsOptions> options, IDeviceManager deviceRepository) : BackgroundService
 {
     private SensorsOptions _sensorsOptions = options.Value;
 
