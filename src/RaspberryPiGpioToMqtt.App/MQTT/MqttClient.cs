@@ -3,7 +3,6 @@ using MQTTnet;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using RaspberryPoGpioToMqtt.Devices;
 
 namespace RaspberryPiGpioToMqtt.App.MQTT;
@@ -82,13 +81,6 @@ public sealed class MqttClient : ICommunication, IAsyncDisposable
         var subscription = await _mqttClient.SubscribeAsync(topic);
     }
 
-    public async Task SubscribeFor<T>(string topic, Func<T, Task> onMessageRecived)
-    {
-        _subscribedTopicActions.Add(topic, message => onMessageRecived(
-            JsonSerializer.Deserialize<T>(message) ?? throw new Exception("Unable to deserialize message")));
-        var subscription = await _mqttClient.SubscribeAsync(topic);
-    }
-
     public async ValueTask DisposeAsync()
     {
         var disconectOptions = new MqttClientDisconnectOptionsBuilder()
@@ -96,12 +88,6 @@ public sealed class MqttClient : ICommunication, IAsyncDisposable
             .Build();
         await _mqttClient.DisconnectAsync(disconectOptions);
         _mqttClient.Dispose();
-    }
-
-    public async Task Send<T>(string topic, T message)
-    {
-        var payload = JsonSerializer.Serialize(message, _serializerOptions);
-        await SendData(topic, payload);
     }
 
     public async Task Send(string topic, string message)

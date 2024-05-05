@@ -17,9 +17,7 @@ public class SensorHostedService(IOptions<SensorsOptions> options, IDeviceManage
         await Task.Delay(TimeSpan.FromSeconds(3), stoppingToken);
         while (!stoppingToken.IsCancellationRequested)
         {
-            logger.LogInformation("Reading Sensors");
             await deviceRepository.SendSensorStates();
-            logger.LogInformation("Sensors read");
             await Task.Delay(_sensorsOptions.SensorReadInterval, stoppingToken);
         }
     }

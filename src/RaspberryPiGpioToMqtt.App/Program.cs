@@ -17,6 +17,7 @@ builder.Services.AddOptions<MqttClientOptions>()
     .ValidateOnStart();
 
 builder.Services.AddSingleton<ICommunication, MqttClient>();
+builder.Services.TryDecorate<ICommunication, CommunicationLogger>();
 builder.Services.AddHostedService<SensorHostedService>();
 builder.Services.AddDevices(builder.Configuration);
 
