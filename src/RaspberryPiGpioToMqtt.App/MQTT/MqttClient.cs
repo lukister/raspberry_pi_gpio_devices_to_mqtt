@@ -23,26 +23,32 @@ public sealed class MqttClient : ICommunication, IAsyncDisposable
     private readonly MqttClientOptions _configuration;
     private readonly IMqttClient _mqttClient;
 
-    private JsonSerializerOptions _serializerOptions => new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-    };
-
     public MqttClient(IOptions<MqttClientOptions> configuration)
     {
         var mqttFactory = new MqttFactory();
         _mqttClient = mqttFactory.CreateMqttClient();
         _configuration = configuration.Value;
         _mqttClient.ApplicationMessageReceivedAsync += MessageRecived;
+        _mqttClient.DisconnectedAsync += async x =>
+        {
+            await Task.Delay(2500);
+            await _mqttClient.ReconnectAsync();
+        };
     }
 
     private async Task ConnectIfDisconected()
     {
         if (_mqttClient == null || _mqttClient.IsConnected)
             return;
+
+        if (!_mqttClient.IsConnected)
+            await Task.Delay(5000);
+        if (!_mqttClient.IsConnected)
+            throw new Exception("Auto reconection failed. Unable to use connection");
+
         var mqttClientOptionsBuilder = new MqttClientOptionsBuilder()
-            .WithTcpServer(_configuration.Server);
+            .WithTcpServer(_configuration.Server)
+            .WithCleanSession(false);
 
         if (!string.IsNullOrWhiteSpace(_configuration.User)
             && !string.IsNullOrWhiteSpace(_configuration.Password))
