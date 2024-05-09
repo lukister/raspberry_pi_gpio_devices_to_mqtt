@@ -4,6 +4,7 @@ using RaspberryPoGpioToMqtt.Devices.DeviceRepository;
 using RaspberryPoGpioToMqtt.Devices.Switch;
 using RaspberryPoGpioToMqtt.Devices.Button;
 using Microsoft.Extensions.Logging;
+using RaspberryPoGpioToMqtt.Devices.Button.Implementations;
 
 namespace RaspberryPoGpioToMqtt.Devices;
 
@@ -90,6 +91,15 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
                 _buttons.Add(buttonCommunication);
             }
         }
+
+        AddSystemConfiguration();
+    }
+
+    private void AddSystemConfiguration()
+    {
+        var configuration = new CapabilityConfiguration("system", "readstates", "System", "Read sensor states");
+        var buttonCommunication = new ButtonCommunication(new InternalActionButton(SendSensorStates), configuration, _client);
+        _buttons.Add(buttonCommunication);
     }
 
     private async Task SendInitializationMessages()
