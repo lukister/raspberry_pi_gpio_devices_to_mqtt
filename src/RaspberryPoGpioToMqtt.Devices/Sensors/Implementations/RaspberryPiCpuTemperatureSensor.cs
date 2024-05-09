@@ -18,7 +18,6 @@ internal class RaspberryPiCpuTemperatureSensor : ISensor
         return values
             .Select(MapToSensorCapability)
             .ToArray();
-
     }
 
     private static SensorCapability MapToSensorCapability((string Sensor, Temperature Temperature) x)
@@ -33,6 +32,6 @@ internal class RaspberryPiCpuTemperatureSensor : ISensor
     internal Dictionary<string, double> ReadTemperatures()
     {
         var values = _temperature.ReadTemperatures();
-        return values.ToDictionary(x => x.Sensor.ToLower(), x => x.Temperature.DegreesCelsius);
+        return values.ToDictionary(x => x.Sensor.ToLower(), x => Math.Round(x.Temperature.DegreesCelsius, 1));
     }
 }
