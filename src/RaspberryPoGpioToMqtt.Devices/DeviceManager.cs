@@ -82,7 +82,7 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
                 deviceSensors.Add(sensorCommunication);
             }
 
-            var refreshConfiguration = new CapabilityConfiguration(device.Id, "readstates", "System", "Read sensors");
+            var refreshConfiguration = new CapabilityConfiguration(device.Id, "readstates", device.Name, "Read sensors");
             var refreshButtonCommunication = new ButtonCommunication(new InternalActionButton(() => SendSensorStates(deviceSensors)), refreshConfiguration, _client);
             _buttons.Add(refreshButtonCommunication);
             _sensors.AddRange(deviceSensors);
