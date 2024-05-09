@@ -49,7 +49,12 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
 
     public async Task SendSensorStates()
     {
-        foreach (var sensor in _sensors)
+        await SendSensorStates(_sensors);
+    }
+
+    private async Task SendSensorStates(IEnumerable<SensorCommunication> sensors)
+    {
+        foreach (var sensor in sensors)
         {
             try
             {
@@ -69,13 +74,18 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
         foreach (var device in devicesConfiguration)
         {
             _avalibilityCofiguration.Add(new AvalibilityConfiguration(device.Id));
-
+            var deviceSensors = new List<SensorCommunication>();
             foreach (var sensor in device.Sensors)
             {
                 var configuration = new CapabilityConfiguration(device.Id, sensor.Id, device.Name, sensor.Name);
                 var sensorCommunication = new SensorCommunication(_factory.CreateSensor(sensor), configuration, _client);
-                _sensors.Add(sensorCommunication);
+                deviceSensors.Add(sensorCommunication);
             }
+
+            var refreshConfiguration = new CapabilityConfiguration(device.Id, "readstates", "System", "Read sensors");
+            var refreshButtonCommunication = new ButtonCommunication(new InternalActionButton(() => SendSensorStates(deviceSensors)), refreshConfiguration, _client);
+            _buttons.Add(refreshButtonCommunication);
+            _sensors.AddRange(deviceSensors);
 
             foreach (var @switch in device.Switches)
             {
@@ -91,15 +101,6 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
                 _buttons.Add(buttonCommunication);
             }
         }
-
-        AddSystemConfiguration();
-    }
-
-    private void AddSystemConfiguration()
-    {
-        var configuration = new CapabilityConfiguration("system", "readstates", "System", "Read sensor states");
-        var buttonCommunication = new ButtonCommunication(new InternalActionButton(SendSensorStates), configuration, _client);
-        _buttons.Add(buttonCommunication);
     }
 
     private async Task SendInitializationMessages()
