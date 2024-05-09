@@ -22,7 +22,7 @@ internal class RaspberryPiCpuTemperatureSensor : ISensor
     }
 
     private static SensorCapability MapToSensorCapability((string Sensor, Temperature Temperature) x)
-        => new(x.Sensor.ToLower(), x.Sensor, "temperature", "{{ value_json.cputemp }}", "°C");
+        => new(x.Sensor.ToLower(), x.Sensor, "temperature", "{{ value_json." + x.Sensor.ToLower() +" }}", "°C");
 
     public Task<object> ReadState()
     {
@@ -33,6 +33,6 @@ internal class RaspberryPiCpuTemperatureSensor : ISensor
     internal Dictionary<string, double> ReadTemperatures()
     {
         var values = _temperature.ReadTemperatures();
-        return values.ToDictionary(x => x.Sensor, x => x.Temperature.DegreesCelsius);
+        return values.ToDictionary(x => x.Sensor.ToLower(), x => x.Temperature.DegreesCelsius);
     }
 }
