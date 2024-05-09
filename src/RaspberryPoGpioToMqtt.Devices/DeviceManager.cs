@@ -28,6 +28,7 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
 
     public async Task Initialize()
     {
+        await _client.Initialize();
         InitializeConfiguration();
         await Task.Delay(1000);
         await SendInitializationMessages();

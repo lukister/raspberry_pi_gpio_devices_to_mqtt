@@ -13,6 +13,11 @@ public class CommunicationLogger : ICommunication
         _logger = logger;
     }
 
+    public async Task Initialize()
+    {
+        await _communication.Initialize();
+    }
+
     public async Task Send(string topic, string message)
     {
         try

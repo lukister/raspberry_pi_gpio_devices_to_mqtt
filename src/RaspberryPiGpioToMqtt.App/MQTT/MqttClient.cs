@@ -2,7 +2,6 @@
 using MQTTnet;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 using RaspberryPoGpioToMqtt.Devices;
 
 namespace RaspberryPiGpioToMqtt.App.MQTT;
@@ -21,28 +20,40 @@ public class MqttClientOptions
 public sealed class MqttClient : ICommunication, IAsyncDisposable
 {
     private readonly MqttClientOptions _configuration;
-    private readonly IMqttClient _mqttClient;
-
-    private JsonSerializerOptions _serializerOptions => new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-    };
+    private IMqttClient _mqttClient;
 
     public MqttClient(IOptions<MqttClientOptions> configuration)
     {
-        var mqttFactory = new MqttFactory();
-        _mqttClient = mqttFactory.CreateMqttClient();
         _configuration = configuration.Value;
-        _mqttClient.ApplicationMessageReceivedAsync += MessageRecived;
+        _mqttClient = CreateMqttClient();
     }
 
-    private async Task ConnectIfDisconected()
+    private IMqttClient CreateMqttClient()
     {
-        if (_mqttClient == null || _mqttClient.IsConnected)
-            return;
+        var mqttFactory = new MqttFactory();
+        var mqttClient = mqttFactory.CreateMqttClient();
+        mqttClient.ApplicationMessageReceivedAsync += MessageRecived;
+        mqttClient.DisconnectedAsync += async x =>
+        {
+            await Task.Delay(2500);
+            try
+            {
+                await mqttClient.ReconnectAsync();
+            }
+            catch
+            {
+                _mqttClient = CreateMqttClient();
+                await Initialize();
+            }
+        };
+        return mqttClient;
+    }
+
+    public async Task Initialize()
+    {
         var mqttClientOptionsBuilder = new MqttClientOptionsBuilder()
-            .WithTcpServer(_configuration.Server);
+            .WithTcpServer(_configuration.Server)
+            .WithCleanSession(false);
 
         if (!string.IsNullOrWhiteSpace(_configuration.User)
             && !string.IsNullOrWhiteSpace(_configuration.Password))
@@ -52,11 +63,14 @@ public sealed class MqttClient : ICommunication, IAsyncDisposable
         var mqttClientOptions = mqttClientOptionsBuilder.Build();
 
         await _mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
+        foreach (var topic in _subscribedTopicActions.Keys)
+        {
+            await _mqttClient.SubscribeAsync(topic);
+        }
     }
 
     private async Task SendData(string topic, string payload)
     {
-        await ConnectIfDisconected();
         var message = new MqttApplicationMessageBuilder()
          .WithTopic(topic)
          .WithPayload(payload)
