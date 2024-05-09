@@ -20,6 +20,8 @@ internal class Factory
             => new TestTemperatureAndHumiditySensor(),
         nameof(Dht22TemperatureAndHumiditySensor)
             => new Dht22TemperatureAndHumiditySensor(sensor.GetValue<int>("Pin"), _controller.Value),
+        nameof(RaspberryPiCpuTemperatureSensor)
+            => new RaspberryPiCpuTemperatureSensor(),
         _ => throw new Exception("Unknown sensor")//TODO custom exception
     };
 
@@ -29,7 +31,7 @@ internal class Factory
             => new TestSimpleSwitch(),
         nameof(GpioOnOffSwitch)
             => new GpioOnOffSwitch(
-                sensor.GetValue<int>("Pin"), 
+                sensor.GetValue<int>("Pin"),
                 sensor.GetOptionalValue<bool>("LowMeanOn"),
                 sensor.GetOptionalValue<bool>("TurnOffOnStart"), _controller.Value),
         nameof(GpioTwoPinOnOffWithTimeIntervalSwitch)
