@@ -20,11 +20,13 @@ public class MqttClientOptions
 public sealed class MqttClient : ICommunication, IAsyncDisposable
 {
     private readonly MqttClientOptions _configuration;
+    private readonly ILogger<MqttClient> _logger;
     private IMqttClient _mqttClient;
 
-    public MqttClient(IOptions<MqttClientOptions> configuration)
+    public MqttClient(IOptions<MqttClientOptions> configuration, ILogger<MqttClient> logger)
     {
         _configuration = configuration.Value;
+        _logger = logger;
         _mqttClient = CreateMqttClient();
     }
 
@@ -38,14 +40,18 @@ public sealed class MqttClient : ICommunication, IAsyncDisposable
             await Task.Delay(2500);
             try
             {
+                _logger.LogInformation("Try reconnect MQTT client");
                 await mqttClient.ReconnectAsync();
+                _logger.LogInformation("MQTT client Reconnected");
             }
-            catch
+            catch (Exception exception)
             {
+                _logger.LogError(exception, "MQTT client recconetion failed. Try to recreate client.");
                 _mqttClient = CreateMqttClient();
                 await Initialize();
             }
         };
+        _logger.LogInformation("MQTT client created");
         return mqttClient;
     }
 
@@ -83,10 +89,17 @@ public sealed class MqttClient : ICommunication, IAsyncDisposable
 
     private async Task MessageRecived(MqttApplicationMessageReceivedEventArgs args)
     {
-        if (!_subscribedTopicActions.TryGetValue(args.ApplicationMessage.Topic, out var action))
-            return;
+        try
+        {
+            if (!_subscribedTopicActions.TryGetValue(args.ApplicationMessage.Topic, out var action))
+                return;
 
-        await action(args.ApplicationMessage.ConvertPayloadToString());
+            await action(args.ApplicationMessage.ConvertPayloadToString());
+        }
+        catch (Exception exception) 
+        {
+            _logger.LogError(exception, "Unable to handle message from MQTT client. Topic: {Topic}", args.ApplicationMessage.Topic);
+        }
     }
 
     public async Task SubscribeFor(string topic, Func<string, Task> onMessageRecived)
