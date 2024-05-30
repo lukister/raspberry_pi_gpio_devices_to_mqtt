@@ -18,6 +18,11 @@ public class CommunicationLogger : ICommunication
         await _communication.Initialize();
     }
 
+    public Task<bool> KeepAlive()
+    {
+        return _communication.KeepAlive();
+    }
+
     public async Task Send(string topic, string message)
     {
         try
