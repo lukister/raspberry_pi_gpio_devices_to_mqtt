@@ -37,41 +37,76 @@ public sealed class MqttClient : ICommunication, IAsyncDisposable
         mqttClient.ApplicationMessageReceivedAsync += MessageRecived;
         mqttClient.DisconnectedAsync += async x =>
         {
+            _logger.LogInformation("Client Disconected");
             await Task.Delay(2500);
             try
             {
                 _logger.LogInformation("Try reconnect MQTT client");
-                await mqttClient.ReconnectAsync();
+                _mqttClient = CreateMqttClient();
+                await Initialize();
                 _logger.LogInformation("MQTT client Reconnected");
             }
             catch (Exception exception)
             {
                 _logger.LogError(exception, "MQTT client recconetion failed. Try to recreate client.");
-                _mqttClient = CreateMqttClient();
-                await Initialize();
             }
         };
         _logger.LogInformation("MQTT client created");
         return mqttClient;
     }
 
+    public async Task<bool> KeepAlive()
+    {
+        if (_mqttClient.IsConnected)
+        {
+            try
+            {
+                await _mqttClient.PingAsync();
+                return true;
+            }
+            catch { }
+        }
+
+        var oldClient = _mqttClient;
+
+        try
+        {
+            var mqttClient = CreateMqttClient();
+            await Connect(mqttClient, _configuration, _subscribedTopicActions.Keys);
+            await mqttClient.PingAsync();
+            _mqttClient = mqttClient;
+            await oldClient.DisconnectAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unable to connect to mqtt");
+            return false;
+        }
+    }
+
     public async Task Initialize()
     {
-        var mqttClientOptionsBuilder = new MqttClientOptionsBuilder()
-            .WithTcpServer(_configuration.Server)
-            .WithCleanSession(false);
+        await Connect(_mqttClient, _configuration, _subscribedTopicActions.Keys);
+    }
 
-        if (!string.IsNullOrWhiteSpace(_configuration.User)
-            && !string.IsNullOrWhiteSpace(_configuration.Password))
+    private static async Task Connect(IMqttClient mqttClient, MqttClientOptions configuration, IEnumerable<string> topics)
+    {
+        var mqttClientOptionsBuilder = new MqttClientOptionsBuilder()
+            .WithTcpServer(configuration.Server)
+            .WithCleanSession(true);
+
+        if (!string.IsNullOrWhiteSpace(configuration.User)
+            && !string.IsNullOrWhiteSpace(configuration.Password))
         {
-            mqttClientOptionsBuilder.WithCredentials(_configuration.User, _configuration.Password);
+            mqttClientOptionsBuilder.WithCredentials(configuration.User, configuration.Password);
         }
         var mqttClientOptions = mqttClientOptionsBuilder.Build();
 
-        await _mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
-        foreach (var topic in _subscribedTopicActions.Keys)
+        await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
+        foreach (var topic in topics)
         {
-            await _mqttClient.SubscribeAsync(topic);
+            await mqttClient.SubscribeAsync(topic);
         }
     }
 
@@ -96,7 +131,7 @@ public sealed class MqttClient : ICommunication, IAsyncDisposable
 
             await action(args.ApplicationMessage.ConvertPayloadToString());
         }
-        catch (Exception exception) 
+        catch (Exception exception)
         {
             _logger.LogError(exception, "Unable to handle message from MQTT client. Topic: {Topic}", args.ApplicationMessage.Topic);
         }

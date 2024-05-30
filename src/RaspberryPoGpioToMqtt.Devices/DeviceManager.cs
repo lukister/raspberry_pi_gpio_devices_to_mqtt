@@ -49,7 +49,10 @@ internal class DeviceManager : IAsyncDisposable, IDeviceManager
 
     public async Task SendSensorStates()
     {
-        await SendSensorStates(_sensors);
+        if (await _client.KeepAlive())
+            await SendSensorStates(_sensors);
+        else
+            throw new Exception("No connection");
     }
 
     private async Task SendSensorStates(IEnumerable<SensorCommunication> sensors)

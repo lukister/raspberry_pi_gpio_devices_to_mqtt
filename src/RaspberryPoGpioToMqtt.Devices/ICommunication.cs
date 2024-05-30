@@ -7,6 +7,7 @@ namespace RaspberryPoGpioToMqtt.Devices;
 public interface ICommunication
 {
     Task Initialize();
+    Task<bool> KeepAlive();
     Task Send(string topic, string message);
     Task SubscribeFor(string topic, Func<string, Task> onMessageRecived);
 }
